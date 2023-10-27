@@ -193,7 +193,7 @@ public class Util {
         if(protect==null || !protect.contains(EDIT_TYPE_PROTECTED)){
             return null;
         }
-        return protect;
+        return null;
     }
     private static String loadApkEditorProperties(TableBlock tableBlock){
         if(tableBlock == null){
