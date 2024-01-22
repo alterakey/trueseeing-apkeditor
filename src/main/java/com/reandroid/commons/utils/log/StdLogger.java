@@ -17,36 +17,13 @@ public class StdLogger extends Logger{
             if(line==null){
                 line="null";
             }
-            if(mSameLine){
-                writeSameLine(" ");
-                mSameLine = false;
-            }
             printStream.println(line);
         }
     }
     @Override
     public void writeSameLine(String line) {
         synchronized (mLock){
-            if(line == null){
-                line = "null";
-            }
-            mSameLine = true;
-            int width = checkConsoleWidth();
-            StringBuilder builder = new StringBuilder();
-            builder.append('\r');
-            for(int i = 0; i < width; i++){
-                builder.append(' ');
-            }
-            builder.append('\r');
-            // leave space for blinking cursor;
-            width = width - 1;
-            builder.append(' ');
-            if(line.length() > width){
-                line = line.substring(0, width);
-            }
-            builder.append(line);
-            builder.append('\r');
-            printStream.print(builder.toString());
+	    writeLine(line);
         }
     }
     static StdLogger getInstance(){
