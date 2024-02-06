@@ -16,6 +16,8 @@
 package com.reandroid.apkeditor.common;
 
 import com.reandroid.apk.APKLogger;
+import com.reandroid.apk.ApkUtil;
+import com.reandroid.app.AndroidManifest;
 import com.reandroid.arsc.chunk.xml.AndroidManifestBlock;
 import com.reandroid.arsc.chunk.xml.ResXmlAttribute;
 import com.reandroid.arsc.chunk.xml.ResXmlElement;
@@ -34,7 +36,7 @@ public class AndroidManifestHelper {
             return EmptyList.of();
         }
         return CollectionUtil.toList(parentElement.getElements(element -> {
-            if(!element.equalsName(AndroidManifestBlock.TAG_meta_data)){
+            if(!element.equalsName(AndroidManifest.TAG_meta_data)){
                 return false;
             }
             ResXmlAttribute nameAttribute = CollectionUtil.getFirst(element
@@ -46,9 +48,33 @@ public class AndroidManifestHelper {
             if(value == null){
                 return false;
             }
+            if (value.equals("com.android.dynamic.apk.fused.modules")){
+                ResXmlAttribute attribute = element.searchAttributeByResourceId(AndroidManifest.ID_value);
+                    if (attribute != null){
+                        String attributeValue = attribute.getValueAsString();
+                        if (attributeValue != null && attributeValue.equals(ApkUtil.DEF_MODULE_NAME)) {
+                            return true;
+                        }
+                    }
+            }
             return value.startsWith("com.android.vending.")
                     || value.startsWith("com.android.stamp.");
         }));
+    }
+
+    public static void removeAttributeFromManifestByName(AndroidManifestBlock androidManifestBlock,
+                                                                 String resourceName, APKLogger logger){
+        ResXmlElement manifestElement = androidManifestBlock.getManifestElement();
+        if(manifestElement == null){
+            if(logger != null){
+                logger.logMessage("WARN: AndroidManifest don't have <manifest>");
+            }
+            return;
+        }
+            int removed = manifestElement.removeAttributesWithName(resourceName);
+            if (removed > 0 && logger != null) {
+                logger.logMessage("Removed-attribute : " + resourceName);
+        }
     }
 
     public static void removeAttributeFromManifestAndApplication(AndroidManifestBlock androidManifestBlock,
@@ -65,7 +91,7 @@ public class AndroidManifestHelper {
         }
         int removed = manifestElement.removeAttributesWithId(resourceId);
         ResXmlElement applicationElement = manifestElement.getElementByTagName(
-                AndroidManifestBlock.TAG_application);
+                AndroidManifest.TAG_application);
         if(removed > 1){
             if(logger != null){
                 logger.logMessage("Duplicate attributes on <manifest> removed: "
@@ -109,8 +135,8 @@ public class AndroidManifestHelper {
         return attribute.decodeValue();
     }
     static boolean isNameResourceId(ResXmlAttribute attribute){
-        int resourceId = attribute.getNameResourceID();
-        return resourceId == AndroidManifestBlock.ID_name;
+        int resourceId = attribute.getNameId();
+        return resourceId == AndroidManifest.ID_name;
     }
     static final Predicate<ResXmlAttribute> NAME_FILTER = attribute -> {
         if(!isNameResourceId(attribute)){
